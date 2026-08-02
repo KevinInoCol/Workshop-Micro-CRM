@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+*.db
+.DS_Store
+
+# Red de seguridad del instructor: no se publica, spoilea la demo y el laboratorio.
+docs/solucion-referencia/

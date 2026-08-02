@@ -1,0 +1,38 @@
+[project]
+name = "micro-crm"
+version = "0.1.0"
+description = "Micro-CRM de demostracion para el workshop 'Claude Code en Produccion'"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.7",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+# B008 no aplica: `Depends()` en el default es el patron idiomatico de FastAPI.
+# Las reglas DTZ quedan fuera a proposito: el dominio trabaja con fechas naive.
+ignore = []
