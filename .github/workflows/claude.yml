@@ -27,6 +27,11 @@ permissions:
   id-token: write
 
 env:
+  # Sin esta linea la Action usa Opus por defecto, que para este repo es
+  # gastar de mas: un issue costaba ~2 USD. Sonnet resuelve estos casos igual
+  # de bien por una fraccion del precio.
+  MODELO: claude-sonnet-5
+
   # La Action arranca al agente en modo SOLO LECTURA: por defecto solo puede
   # mirar el repo y hacer operaciones de git. Sin Edit ni Write se queda
   # dando vueltas hasta agotar los turnos.
@@ -67,7 +72,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           settings: .claude/settings.json
           claude_args: |
-            --max-turns 30
+            --model ${{ env.MODELO }}
+            --max-turns 50
             --allowedTools "${{ env.HERRAMIENTAS }}"
 
   # --------------------------------------------------------------- etiqueta
@@ -90,7 +96,8 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           settings: .claude/settings.json
           claude_args: |
-            --max-turns 30
+            --model ${{ env.MODELO }}
+            --max-turns 50
             --allowedTools "${{ env.HERRAMIENTAS }}"
           # Interpolamos SOLO el numero del issue. Meter aqui el titulo o el
           # cuerpo seria pasar texto de terceros directo al prompt: cualquiera
