@@ -1,0 +1,89 @@
+name: Claude
+
+# Dos formas de despertar al agente, cada una con su job:
+#
+#   1. Alguien escribe "@claude ..." en un issue o en un PR   -> job "mencion"
+#   2. Alguien pone la etiqueta "delegar-a-claude" a un issue -> job "etiqueta"
+#
+# La diferencia no es cosmetica: con una mencion, la Action toma el propio
+# comentario como instruccion. Con una etiqueta no hay texto que tomar, asi
+# que hay que darle un prompt explicito.
+#
+# Quien puede dispararlo: por defecto la Action solo obedece a usuarios con
+# permiso de escritura en el repo. No hace falta filtrar a mano.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  # ---------------------------------------------------------------- mencion
+  mencion:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # El hook PostToolUse corre pytest despues de cada edicion. Sin las
+      # dependencias instaladas, el agente trabajaria a ciegas.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          settings: .claude/settings.json
+          claude_args: --max-turns 20
+
+  # --------------------------------------------------------------- etiqueta
+  etiqueta:
+    if: github.event_name == 'issues' && github.event.label.name == 'delegar-a-claude'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          settings: .claude/settings.json
+          claude_args: --max-turns 20
+          # Interpolamos SOLO el numero del issue. Meter aqui el titulo o el
+          # cuerpo seria pasar texto de terceros directo al prompt: cualquiera
+          # podria esconder instrucciones en un issue.
+          prompt: |
+            Un miembro del equipo marco el issue #${{ github.event.issue.number }}
+            de este repositorio para que lo resuelvas.
+
+            Empieza leyendolo:  gh issue view ${{ github.event.issue.number }}
+
+            Sigue las convenciones de CLAUDE.md. En particular:
+            reproduce el problema con un test que falle antes de tocar el
+            codigo, y corre la suite completa antes de dar por terminado.
+
+            Cuando termines, abre un pull request que explique la causa raiz
+            del problema, no solo el cambio.
