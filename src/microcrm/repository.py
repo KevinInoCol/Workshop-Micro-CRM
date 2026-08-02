@@ -55,7 +55,14 @@ def contacto_por_id(db: Database, contacto_id: int) -> Contacto | None:
 
 
 def contacto_por_email(db: Database, email: str) -> Contacto | None:
-    fila = db.consultar_uno("SELECT * FROM contactos WHERE email = ?", (email,))
+    """Busca por email sin distinguir mayusculas de minusculas.
+
+    La colacion por defecto de SQLite es BINARY, asi que `email = ?` trataria
+    'LUIS@nova.pe' y 'luis@nova.pe' como dos buzones distintos. `COLLATE NOCASE`
+    tambien encuentra las filas viejas que se guardaron con la capitalizacion
+    original, antes de que el servicio normalizara el email.
+    """
+    fila = db.consultar_uno("SELECT * FROM contactos WHERE email = ? COLLATE NOCASE", (email,))
     return _a_contacto(fila) if fila else None
 
 

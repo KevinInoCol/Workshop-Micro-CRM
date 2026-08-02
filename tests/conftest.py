@@ -33,6 +33,29 @@ def contacto(db: Database) -> Contacto:
     )
 
 
+def insertar_contacto_crudo(
+    db: Database,
+    nombre: str,
+    email: str,
+    empresa: str | None = None,
+) -> Contacto:
+    """Inserta un contacto saltandose el servicio.
+
+    Sirve para simular filas que ya estan en la base tal como se guardaron
+    antes de cualquier normalizacion (por ejemplo, con el email en mayusculas).
+    """
+    return insertar_contacto(
+        db,
+        Contacto(
+            id=None,
+            nombre=nombre,
+            email=email,
+            empresa=empresa,
+            creado_en=datetime(2026, 1, 5, 9, 0, 0),
+        ),
+    )
+
+
 def crear_deal_cerrado(
     db: Database,
     contacto_id: int,

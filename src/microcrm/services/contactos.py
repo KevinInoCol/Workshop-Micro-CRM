@@ -9,17 +9,31 @@ from ..db import Database
 from ..models import Contacto, ContactoDuplicado, NoEncontrado
 
 
+def normalizar_email(email: str) -> str:
+    """Forma canonica de un email: sin espacios alrededor y en minusculas.
+
+    `LUIS@nova.pe` y `luis@nova.pe` son el mismo buzon, asi que se guardan
+    igual. Normalizar antes de buscar y antes de insertar evita que la misma
+    persona entre dos veces solo por como la escribio el vendedor.
+    """
+    return email.strip().lower()
+
+
 def crear_contacto(
     db: Database, nombre: str, email: str, empresa: str | None = None
 ) -> Contacto:
-    """Crea un contacto. El email debe ser unico en todo el CRM."""
+    """Crea un contacto. El email debe ser unico en todo el CRM.
+
+    La unicidad no distingue mayusculas de minusculas.
+    """
+    email = normalizar_email(email)
     if repo.contacto_por_email(db, email):
         raise ContactoDuplicado(f"Ya existe un contacto con el email {email}")
 
     contacto = Contacto(
         id=None,
         nombre=nombre.strip(),
-        email=email.strip(),
+        email=email,
         empresa=empresa.strip() if empresa else None,
         creado_en=datetime.now(),
     )
