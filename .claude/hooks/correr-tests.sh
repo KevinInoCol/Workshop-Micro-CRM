@@ -11,7 +11,11 @@ case "$ruta" in
   *) exit 0 ;;
 esac
 
-if [ -x .venv/bin/python ]; then
+# Si hay un entorno activo (conda o venv) se respeta ese; si no, se busca
+# un .venv/ en el repo. Asi el hook funciona con cualquiera de los dos.
+if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then
+  piton=python3
+elif [ -x .venv/bin/python ]; then
   piton=.venv/bin/python
 else
   piton=python3

@@ -7,11 +7,26 @@ El proyecto son dos piezas: una API en Python y una interfaz en React.
 
 ## Backend
 
+Con **conda**:
+
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest        # deberias ver 16 tests en verde
-.venv/bin/uvicorn microcrm.api:app --reload
+conda create -n Workshop-26-Micro-CRM python=3.12 -y
+conda activate Workshop-26-Micro-CRM
+pip install -e ".[dev]"
+```
+
+O con **venv**:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Con el entorno activo:
+
+```bash
+pytest                              # deberias ver 16 tests en verde
+uvicorn microcrm.api:app --reload
 ```
 
 API en http://localhost:8000 · documentacion interactiva en `/docs`
