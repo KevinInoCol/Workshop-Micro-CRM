@@ -1,0 +1,182 @@
+:root {
+  --fondo: #f6f7f9;
+  --tarjeta: #ffffff;
+  --borde: #e3e6ea;
+  --texto: #1c2024;
+  --suave: #6b7280;
+  --acento: #2563eb;
+  --ok: #16a34a;
+  --mal: #dc2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  max-width: 1100px;
+  margin: 0 auto 20px;
+}
+.cabecera h1 {
+  font-size: 20px;
+  margin: 0;
+}
+.cabecera span {
+  color: var(--suave);
+  font-size: 13px;
+}
+.cabecera button {
+  margin-left: auto;
+}
+
+.grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .columnas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tarjeta {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 16px;
+}
+.tarjeta h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--suave);
+  margin: 0 0 12px;
+}
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--borde);
+  background: #fff;
+  cursor: pointer;
+}
+button:hover {
+  border-color: var(--acento);
+  color: var(--acento);
+}
+button.primario {
+  background: var(--acento);
+  color: #fff;
+  border-color: var(--acento);
+}
+button.primario:hover {
+  opacity: 0.9;
+  color: #fff;
+}
+
+input,
+select {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: #fff;
+  min-width: 0;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+form input {
+  flex: 1 1 130px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--suave);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--borde);
+}
+td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #f1f3f5;
+}
+tr:last-child td {
+  border-bottom: 0;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tenue {
+  color: var(--suave);
+  font-size: 12px;
+}
+
+.cifras {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.cifra strong {
+  display: block;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.cifra span {
+  font-size: 12px;
+  color: var(--suave);
+}
+
+.control {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f8f9fb;
+  border: 1px dashed var(--borde);
+  font-size: 13px;
+  color: var(--suave);
+}
+.control b {
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+.control.alerta {
+  border-color: var(--mal);
+  background: #fef2f2;
+  color: var(--mal);
+}
+.control.alerta b {
+  color: var(--mal);
+}
+
+.aviso {
+  color: var(--mal);
+  font-size: 13px;
+  margin-top: 8px;
+  min-height: 18px;
+}

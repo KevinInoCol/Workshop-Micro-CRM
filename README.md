@@ -3,23 +3,40 @@
 CRM minimo de contactos, oportunidades y reportes comerciales.
 Repo base del workshop **Claude Code en Produccion: de Issue Tecnico a Pull Request**.
 
-## Instalacion
+El proyecto son dos piezas: una API en Python y una interfaz en React.
+
+## Backend
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest
-```
-
-Deberias ver **16 tests en verde**.
-
-## Levantar la API
-
-```bash
+.venv/bin/python -m pytest        # deberias ver 16 tests en verde
 .venv/bin/uvicorn microcrm.api:app --reload
 ```
 
-Documentacion interactiva en http://localhost:8000/docs
+API en http://localhost:8000 · documentacion interactiva en `/docs`
+
+## Frontend
+
+En otra terminal:
+
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Interfaz en http://localhost:5173
+
+Vite hace de proxy hacia el backend, asi que el navegador ve un solo origen y no
+hay CORS de por medio. Si tu backend no esta en el puerto 8000:
+
+```bash
+VITE_BACKEND=http://localhost:8010 npm run dev
+```
+
+Tambien puedes compilar la interfaz (`npm run build`) y dejar que la sirva el
+propio backend desde `/`.
 
 ## Endpoints
 

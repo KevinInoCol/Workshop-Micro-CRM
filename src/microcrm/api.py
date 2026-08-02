@@ -6,7 +6,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -21,7 +21,9 @@ app = FastAPI(title="Micro-CRM", version="0.1.0")
 
 _db = Database("microcrm.db")
 
-ESTATICOS = Path(__file__).resolve().parents[2] / "static"
+# En desarrollo la interfaz la sirve Vite (`npm run dev` en Frontend/).
+# Si alguien corrio `npm run build`, servimos ese build desde aqui tambien.
+INTERFAZ = Path(__file__).resolve().parents[2] / "Frontend" / "dist"
 
 
 def obtener_db() -> Database:
@@ -116,7 +118,17 @@ def sembrar(db: Database = Depends(obtener_db)):
 
 @app.get("/", include_in_schema=False)
 def inicio():
-    return FileResponse(ESTATICOS / "index.html")
+    indice = INTERFAZ / "index.html"
+    if not indice.exists():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "La interfaz no esta compilada. Corre 'npm run dev' dentro "
+                "de Frontend/ (desarrollo) o 'npm run build' para servirla desde aqui."
+            },
+        )
+    return FileResponse(indice)
 
 
-app.mount("/static", StaticFiles(directory=ESTATICOS), name="static")
+if (INTERFAZ / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=INTERFAZ / "assets"), name="assets")
