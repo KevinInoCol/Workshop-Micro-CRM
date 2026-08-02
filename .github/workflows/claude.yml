@@ -26,6 +26,22 @@ permissions:
   issues: write
   id-token: write
 
+env:
+  # La Action arranca al agente en modo SOLO LECTURA: por defecto solo puede
+  # mirar el repo y hacer operaciones de git. Sin Edit ni Write se queda
+  # dando vueltas hasta agotar los turnos.
+  #
+  # Aqui declaramos exactamente que puede tocar. Es una lista corta a
+  # proposito: leer, editar, correr los tests y hacer commit. Nada mas.
+  #
+  # Ojo: esto NO reemplaza a los guardrails de .claude/settings.json. Esta
+  # lista dice que herramientas existen; el hook dice como se pueden usar.
+  # Editar tests sigue bloqueado aunque Edit este permitido.
+  #
+  # Va en una sola linea a proposito: el plegado de YAML (`>-`) mete espacios
+  # despues de cada salto y el parser de --allowedTools no los tolera.
+  HERRAMIENTAS: "Read,Glob,Grep,LS,Edit,Write,Bash(python:*),Bash(python3:*),Bash(pytest:*),Bash(ruff:*),Bash(git add:*),Bash(git commit:*),Bash(git rm:*),Bash(git status:*),Bash(git diff:*),Bash(gh issue view:*),Bash(/home/runner/work/_actions/anthropics/claude-code-action/v1/scripts/git-push.sh:*),mcp__github_comment__update_claude_comment"
+
 jobs:
   # ---------------------------------------------------------------- mencion
   mencion:
@@ -33,7 +49,7 @@ jobs:
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,13 +66,15 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           settings: .claude/settings.json
-          claude_args: --max-turns 20
+          claude_args: |
+            --max-turns 30
+            --allowedTools "${{ env.HERRAMIENTAS }}"
 
   # --------------------------------------------------------------- etiqueta
   etiqueta:
     if: github.event_name == 'issues' && github.event.label.name == 'delegar-a-claude'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -71,7 +89,9 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           settings: .claude/settings.json
-          claude_args: --max-turns 20
+          claude_args: |
+            --max-turns 30
+            --allowedTools "${{ env.HERRAMIENTAS }}"
           # Interpolamos SOLO el numero del issue. Meter aqui el titulo o el
           # cuerpo seria pasar texto de terceros directo al prompt: cualquiera
           # podria esconder instrucciones en un issue.
