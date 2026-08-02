@@ -114,6 +114,10 @@ def deals_por_contacto(db: Database, contacto_id: int) -> list[Deal]:
     return [_a_deal(f) for f in filas]
 
 
+def listar_deals(db: Database) -> list[Deal]:
+    return [_a_deal(f) for f in db.consultar("SELECT * FROM deals ORDER BY id")]
+
+
 def deals_activos(db: Database) -> list[Deal]:
     filas = db.consultar(
         "SELECT * FROM deals WHERE etapa NOT IN ('ganado', 'perdido') ORDER BY creado_en"

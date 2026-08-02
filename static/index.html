@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Micro-CRM</title>
+<style>
+  :root {
+    --fondo: #f6f7f9;
+    --tarjeta: #ffffff;
+    --borde: #e3e6ea;
+    --texto: #1c2024;
+    --suave: #6b7280;
+    --acento: #2563eb;
+    --ok: #16a34a;
+    --mal: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+  }
+  header {
+    display: flex; align-items: baseline; gap: 12px;
+    max-width: 1100px; margin: 0 auto 20px;
+  }
+  h1 { font-size: 20px; margin: 0; }
+  header span { color: var(--suave); font-size: 13px; }
+  header button { margin-left: auto; }
+
+  .grid { max-width: 1100px; margin: 0 auto; display: grid; gap: 16px; }
+  @media (min-width: 900px) { .columnas { grid-template-columns: 1fr 1fr; } }
+
+  .tarjeta {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 10px; padding: 16px;
+  }
+  .tarjeta h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--suave); margin: 0 0 12px;
+  }
+
+  button {
+    font: inherit; padding: 6px 12px; border-radius: 6px;
+    border: 1px solid var(--borde); background: #fff; cursor: pointer;
+  }
+  button:hover { border-color: var(--acento); color: var(--acento); }
+  button.primario { background: var(--acento); color: #fff; border-color: var(--acento); }
+  button.primario:hover { opacity: .9; color: #fff; }
+
+  input, select {
+    font: inherit; padding: 6px 10px; border: 1px solid var(--borde);
+    border-radius: 6px; background: #fff; min-width: 0;
+  }
+  form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  form input { flex: 1 1 130px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    text-align: left; font-weight: 600; font-size: 12px; color: var(--suave);
+    padding: 6px 8px; border-bottom: 1px solid var(--borde);
+  }
+  td { padding: 7px 8px; border-bottom: 1px solid #f1f3f5; }
+  tr:last-child td { border-bottom: 0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .cifras { display: flex; gap: 24px; flex-wrap: wrap; }
+  .cifra strong { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
+  .cifra span { font-size: 12px; color: var(--suave); }
+
+  .control {
+    margin-top: 14px; padding: 10px 12px; border-radius: 6px;
+    background: #f8f9fb; border: 1px dashed var(--borde);
+    font-size: 13px; color: var(--suave);
+  }
+  .control b { color: var(--texto); font-variant-numeric: tabular-nums; }
+  .control.alerta { border-color: var(--mal); background: #fef2f2; color: var(--mal); }
+  .control.alerta b { color: var(--mal); }
+
+  .etiqueta {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 12px; background: #eef1f5; color: var(--suave);
+  }
+  .etiqueta.ganado { background: #dcfce7; color: #15803d; }
+  .etiqueta.perdido { background: #fee2e2; color: #b91c1c; }
+
+  .aviso { color: var(--mal); font-size: 13px; margin-top: 8px; min-height: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Micro-CRM</h1>
+  <span>workshop · repo de demostracion</span>
+  <button class="primario" onclick="sembrar()">Cargar datos de ejemplo</button>
+</header>
+
+<div class="grid">
+
+  <section class="tarjeta">
+    <h2>Reporte mensual</h2>
+    <form onsubmit="event.preventDefault(); cargarReporte()">
+      <select id="mes">
+        <option value="1">Enero</option><option value="2">Febrero</option>
+        <option value="3" selected>Marzo</option><option value="4">Abril</option>
+        <option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option>
+        <option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <input id="anio" type="number" value="2026" style="flex:0 0 90px">
+      <button>Ver</button>
+    </form>
+    <div class="cifras" id="cifras"></div>
+    <div class="control" id="control"></div>
+  </section>
+
+  <div class="grid columnas">
+
+    <section class="tarjeta">
+      <h2>Contactos</h2>
+      <form onsubmit="event.preventDefault(); crearContacto()">
+        <input id="nombre" placeholder="Nombre" required>
+        <input id="email" placeholder="Email" required>
+        <input id="empresa" placeholder="Empresa">
+        <button class="primario">Agregar</button>
+      </form>
+      <form onsubmit="event.preventDefault(); cargarContactos()">
+        <input id="busqueda" placeholder="Buscar por nombre o empresa">
+        <button>Buscar</button>
+      </form>
+      <table><tbody id="contactos"></tbody></table>
+      <div class="aviso" id="avisoContacto"></div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Pipeline</h2>
+      <table>
+        <thead><tr><th>Oportunidad</th><th>Etapa</th><th class="num">Monto</th><th>Cerrado</th></tr></thead>
+        <tbody id="deals"></tbody>
+      </table>
+    </section>
+
+  </div>
+</div>
+
+<script>
+const soles = n => "S/ " + (n ?? 0).toLocaleString("es-PE");
+const pedir = async (url, opts) => {
+  const r = await fetch(url, opts);
+  const cuerpo = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(cuerpo?.detail || r.statusText);
+  return cuerpo;
+};
+
+async function sembrar() {
+  await pedir("/demo/sembrar", { method: "POST" });
+  refrescar();
+}
+
+async function crearContacto() {
+  const aviso = document.getElementById("avisoContacto");
+  aviso.textContent = "";
+  try {
+    await pedir("/contactos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: document.getElementById("nombre").value,
+        email: document.getElementById("email").value,
+        empresa: document.getElementById("empresa").value || null,
+      }),
+    });
+    ["nombre", "email", "empresa"].forEach(id => document.getElementById(id).value = "");
+    cargarContactos();
+  } catch (e) {
+    aviso.textContent = e.message;
+  }
+}
+
+async function cargarContactos() {
+  const q = encodeURIComponent(document.getElementById("busqueda").value);
+  const datos = await pedir("/contactos?q=" + q);
+  document.getElementById("contactos").innerHTML = datos.map(c => `
+    <tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.email}</td>
+      <td style="color:var(--suave)">${c.empresa ?? ""}</td>
+    </tr>`).join("") || `<tr><td style="color:var(--suave)">Sin contactos</td></tr>`;
+}
+
+const ETAPAS = ["nuevo", "contactado", "propuesta", "negociacion", "ganado", "perdido"];
+
+async function cargarDeals() {
+  const datos = await pedir("/deals");
+  window._deals = datos;
+  document.getElementById("deals").innerHTML = datos.map(d => `
+    <tr>
+      <td>${d.titulo}<br><span style="color:var(--suave);font-size:12px">${d.contacto}</span></td>
+      <td>
+        <select onchange="moverEtapa(${d.id}, this.value)">
+          ${ETAPAS.map(e => `<option ${e === d.etapa ? "selected" : ""}>${e}</option>`).join("")}
+        </select>
+      </td>
+      <td class="num">${soles(d.monto)}</td>
+      <td style="color:var(--suave);font-size:12px">${d.cerrado_en ? d.cerrado_en.replace("T", " ").slice(0, 16) : "—"}</td>
+    </tr>`).join("");
+}
+
+async function moverEtapa(id, etapa) {
+  await pedir(`/deals/${id}/etapa`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ etapa }),
+  });
+  refrescar();
+}
+
+async function cargarReporte() {
+  const anio = +document.getElementById("anio").value;
+  const mes = +document.getElementById("mes").value;
+  const r = await pedir(`/reportes/mensual?anio=${anio}&mes=${mes}`);
+
+  document.getElementById("cifras").innerHTML = `
+    <div class="cifra"><strong style="color:var(--ok)">${r.deals_ganados}</strong><span>Ganados</span></div>
+    <div class="cifra"><strong style="color:var(--mal)">${r.deals_perdidos}</strong><span>Perdidos</span></div>
+    <div class="cifra"><strong>${soles(r.monto_ganado)}</strong><span>Monto ganado</span></div>
+    <div class="cifra"><strong>${Math.round(r.tasa_conversion * 100)}%</strong><span>Conversion</span></div>`;
+
+  // Control: contamos directo sobre los deals para contrastar con el reporte.
+  const enBase = (window._deals ?? []).filter(d => {
+    if (d.etapa !== "ganado" || !d.cerrado_en) return false;
+    const f = new Date(d.cerrado_en);
+    return f.getFullYear() === anio && f.getMonth() + 1 === mes;
+  });
+  const montoBase = enBase.reduce((a, d) => a + d.monto, 0);
+  const cuadra = enBase.length === r.deals_ganados && montoBase === r.monto_ganado;
+
+  const control = document.getElementById("control");
+  control.className = "control" + (cuadra ? "" : " alerta");
+  control.innerHTML = cuadra
+    ? `Control: el pipeline tiene <b>${enBase.length}</b> deals ganados este mes por <b>${soles(montoBase)}</b>. Cuadra con el reporte.`
+    : `Control: el pipeline tiene <b>${enBase.length}</b> deals ganados este mes por <b>${soles(montoBase)}</b>, pero el reporte muestra <b>${r.deals_ganados}</b> por <b>${soles(r.monto_ganado)}</b>.`;
+}
+
+async function refrescar() {
+  await Promise.all([cargarContactos(), cargarDeals()]);
+  await cargarReporte();
+}
+
+refrescar();
+</script>
+</body>
+</html>

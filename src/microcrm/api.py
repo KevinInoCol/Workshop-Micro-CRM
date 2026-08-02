@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from . import demo, repository
 from .db import Database
 from .models import ErrorDeDominio, Etapa, NoEncontrado
 from .services import contactos as svc_contactos
@@ -16,6 +20,8 @@ from .services import reportes as svc_reportes
 app = FastAPI(title="Micro-CRM", version="0.1.0")
 
 _db = Database("microcrm.db")
+
+ESTATICOS = Path(__file__).resolve().parents[2] / "static"
 
 
 def obtener_db() -> Database:
@@ -85,3 +91,32 @@ def reporte_mensual(anio: int, mes: int, db: Database = Depends(obtener_db)):
 @app.get("/reportes/comparativa")
 def comparativa(anio: int, mes: int, db: Database = Depends(obtener_db)):
     return svc_reportes.comparativa_mensual(db, anio, mes)
+
+
+@app.get("/deals")
+def listar_deals(db: Database = Depends(obtener_db)):
+    """Todos los deals, con el nombre del contacto resuelto."""
+    nombres = {c.id: c.nombre for c in repository.listar_contactos(db)}
+    salida = []
+    for deal in repository.listar_deals(db):
+        fila = asdict(deal)
+        fila["contacto"] = nombres.get(deal.contacto_id, "?")
+        salida.append(fila)
+    return salida
+
+
+# --------------------------------------------------------------------- demo
+
+
+@app.post("/demo/sembrar")
+def sembrar(db: Database = Depends(obtener_db)):
+    """Recarga los datos de ejemplo. Solo para la demo del workshop."""
+    return demo.sembrar(db)
+
+
+@app.get("/", include_in_schema=False)
+def inicio():
+    return FileResponse(ESTATICOS / "index.html")
+
+
+app.mount("/static", StaticFiles(directory=ESTATICOS), name="static")
