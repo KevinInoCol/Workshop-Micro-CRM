@@ -1,16 +1,16 @@
 name: Claude
 
-# Dos formas de despertar al agente, cada una con su job:
+# Delegar un issue a un agente. Dos formas de despertarlo:
 #
-#   1. Alguien escribe "@claude ..." en un issue o en un PR   -> job "mencion"
-#   2. Alguien pone la etiqueta "delegar-a-claude" a un issue -> job "etiqueta"
+#   1. Escribir "@claude ..." en un comentario de issue o de PR
+#   2. Poner la etiqueta "delegar-a-claude" a un issue
 #
-# La diferencia no es cosmetica: con una mencion, la Action toma el propio
-# comentario como instruccion. Con una etiqueta no hay texto que tomar, asi
-# que hay que darle un prompt explicito.
+# La segunda es la que usariamos en un equipo: la etiqueta la pone una
+# persona en el triage, asi que la decision de delegar queda registrada y
+# nadie despacha un agente por accidente.
 #
-# Quien puede dispararlo: por defecto la Action solo obedece a usuarios con
-# permiso de escritura en el repo. No hace falta filtrar a mano.
+# Las instrucciones de COMO trabajar no viven aqui: viven en CLAUDE.md, que
+# es el mismo archivo que obedece Claude Code en local. Un solo lugar.
 
 on:
   issue_comment:
@@ -20,97 +20,94 @@ on:
   issues:
     types: [labeled]
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  id-token: write
+# Sin esto, dos comentarios seguidos levantan dos agentes sobre el mismo
+# issue: se pisan las ramas y se paga dos veces. No cancelamos el que ya
+# corre —podria dejar una rama a medio empujar—, lo encolamos.
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+# Sin permisos a nivel de workflow: cada job pide lo suyo (minimo privilegio).
+permissions: {}
 
 env:
-  # Sin esta linea la Action usa Opus por defecto, que para este repo es
-  # gastar de mas: un issue costaba ~2 USD. Sonnet resuelve estos casos igual
-  # de bien por una fraccion del precio.
+  # Sin --model la Action usa Opus por defecto y un issue cuesta ~2 USD.
+  # Sonnet resuelve estos casos igual de bien por una fraccion del precio.
+  #
+  # Es un alias que apunta siempre al ultimo Sonnet 5. Si necesitas que un
+  # PR sea reproducible mes a mes, cambialo por un ID con fecha.
   MODELO: claude-sonnet-5
 
-  # La Action arranca al agente en modo SOLO LECTURA: por defecto solo puede
-  # mirar el repo y hacer operaciones de git. Sin Edit ni Write se queda
-  # dando vueltas hasta agotar los turnos.
+  # La Action arranca al agente en modo SOLO LECTURA: por defecto solo tiene
+  # Read/Glob/Grep/LS y operaciones de git. Sin Edit ni Write se queda
+  # chocando contra los permisos hasta agotar los turnos.
   #
-  # Aqui declaramos exactamente que puede tocar. Es una lista corta a
-  # proposito: leer, editar, correr los tests y hacer commit. Nada mas.
+  # Esta lista dice que herramientas EXISTEN. Los hooks de
+  # .claude/settings.json dicen COMO se pueden usar: editar tests sigue
+  # bloqueado aunque Edit este permitido. Son dos capas distintas.
   #
-  # Ojo: esto NO reemplaza a los guardrails de .claude/settings.json. Esta
-  # lista dice que herramientas existen; el hook dice como se pueden usar.
-  # Editar tests sigue bloqueado aunque Edit este permitido.
-  #
-  # Va en una sola linea a proposito: el plegado de YAML (`>-`) mete espacios
-  # despues de cada salto y el parser de --allowedTools no los tolera.
+  # Va en una sola linea a proposito: el plegado de YAML (`>-`) mete
+  # espacios despues de cada salto y el parser de --allowedTools no los tolera.
   HERRAMIENTAS: "Read,Glob,Grep,LS,Edit,Write,Bash(python:*),Bash(python3:*),Bash(pytest:*),Bash(ruff:*),Bash(git add:*),Bash(git commit:*),Bash(git rm:*),Bash(git status:*),Bash(git diff:*),Bash(gh issue view:*),Bash(/home/runner/work/_actions/anthropics/claude-code-action/v1/scripts/git-push.sh:*),mcp__github_comment__update_claude_comment"
 
 jobs:
-  # ---------------------------------------------------------------- mencion
-  mencion:
+  agente:
+    # Filtramos antes de encender la maquina. La Action tambien valida por su
+    # cuenta, pero para entonces ya pagaste el runner y el pip install.
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && github.event.label.name == 'delegar-a-claude')
+
     runs-on: ubuntu-latest
     timeout-minutes: 25
+
+    permissions:
+      contents: write # crear la rama y empujar commits
+      pull-requests: write # abrir el PR
+      issues: write # comentar el progreso en el issue
+      id-token: write # OIDC, lo usa la Action para el token de la App
+
     steps:
-      - uses: actions/checkout@v4
+      # Las acciones de terceros se fijan a un SHA de commit, no a un tag.
+      # `@v1` es mutable: quien publica la accion puede reapuntarlo y tu
+      # workflow ejecutaria codigo nuevo sin que nadie lo aprobara.
+      # El comentario al lado dice que version es ese SHA; Dependabot los
+      # actualiza con un PR (ver .github/dependabot.yml).
+      - name: Traer el repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # la Action compara ramas: necesita el historial
 
       # El hook PostToolUse corre pytest despues de cada edicion. Sin las
-      # dependencias instaladas, el agente trabajaria a ciegas.
-      - uses: actions/setup-python@v5
+      # dependencias instaladas el agente trabajaria a ciegas: escribiria
+      # codigo sin poder verificarlo.
+      - name: Preparar Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]"
+          cache: pip
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Instalar dependencias
+        run: pip install -e ".[dev]"
+
+      - name: Claude Code
+        uses: anthropics/claude-code-action@be7b93b1907a4abad570368f3c74b6fe3807510b # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # Que el agente de la nube tenga las mismas barreras que el local.
+          # La documentacion no garantiza que se carguen solas, asi que se
+          # pasan explicitas.
           settings: .claude/settings.json
+
+          # Disparadores nativos de la Action. Preferimos estos antes que
+          # reimplementarlos con un `prompt` propio: son los que mantiene
+          # Anthropic y construyen el contexto del issue de forma consistente.
+          trigger_phrase: "@claude"
+          label_trigger: delegar-a-claude
+
           claude_args: |
             --model ${{ env.MODELO }}
             --max-turns 50
             --allowedTools "${{ env.HERRAMIENTAS }}"
-
-  # --------------------------------------------------------------- etiqueta
-  etiqueta:
-    if: github.event_name == 'issues' && github.event.label.name == 'delegar-a-claude'
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]"
-
-      - uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          settings: .claude/settings.json
-          claude_args: |
-            --model ${{ env.MODELO }}
-            --max-turns 50
-            --allowedTools "${{ env.HERRAMIENTAS }}"
-          # Interpolamos SOLO el numero del issue. Meter aqui el titulo o el
-          # cuerpo seria pasar texto de terceros directo al prompt: cualquiera
-          # podria esconder instrucciones en un issue.
-          prompt: |
-            Un miembro del equipo marco el issue #${{ github.event.issue.number }}
-            de este repositorio para que lo resuelvas.
-
-            Empieza leyendolo:  gh issue view ${{ github.event.issue.number }}
-
-            Sigue las convenciones de CLAUDE.md. En particular:
-            reproduce el problema con un test que falle antes de tocar el
-            codigo, y corre la suite completa antes de dar por terminado.
-
-            Cuando termines, abre un pull request que explique la causa raiz
-            del problema, no solo el cambio.

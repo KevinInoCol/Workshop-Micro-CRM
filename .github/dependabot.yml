@@ -1,0 +1,35 @@
+# Fijar las acciones a un SHA de commit es la mitad de la practica; la otra
+# mitad es no quedarse en un SHA viejo para siempre.
+#
+# Dependabot abre un PR cuando alguna accion publica una version nueva, y
+# actualiza el SHA junto con el comentario de version. Asi la actualizacion
+# pasa por revision humana en vez de entrar sola.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencias
+
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    labels:
+      - dependencias
+
+  - package-ecosystem: npm
+    directory: "/Frontend"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    labels:
+      - dependencias
