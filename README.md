@@ -3,13 +3,22 @@
 CRM minimo de contactos, oportunidades y reportes comerciales.
 Repo base del workshop **Claude Code en Produccion: de Issue Tecnico a Pull Request**.
 
-El proyecto son dos piezas: una API en Python y una interfaz en React.
+El proyecto son dos piezas independientes:
+
+```
+Backend/    API en Python (FastAPI + SQLite)
+Frontend/   Interfaz en React + Vite
+```
 
 ## Backend
+
+Todos los comandos de Python se corren **desde `Backend/`**, que es donde vive
+`pyproject.toml`.
 
 Con **conda**:
 
 ```bash
+cd Backend
 conda create -n Workshop-26-Micro-CRM python=3.12 -y
 conda activate Workshop-26-Micro-CRM
 pip install -e ".[dev]"
@@ -18,6 +27,7 @@ pip install -e ".[dev]"
 O con **venv**:
 
 ```bash
+cd Backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
@@ -33,7 +43,7 @@ API en http://localhost:8000 · documentacion interactiva en `/docs`
 
 ## Frontend
 
-En otra terminal:
+En otra terminal, desde la raiz del repositorio:
 
 ```bash
 cd Frontend

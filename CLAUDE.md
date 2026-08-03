@@ -2,14 +2,27 @@
 
 CRM minimo para gestionar contactos, oportunidades (deals) y reportes comerciales.
 
+## Estructura del repositorio
+
+Dos mitades independientes. Todo comando de Python se corre **desde `Backend/`**:
+ahi vive `pyproject.toml`, y pytest lo necesita para resolver sus rutas.
+
+```
+Backend/    API en Python (src/, tests/, pyproject.toml)
+Frontend/   Interfaz en React + Vite
+docs/       Issues del workshop y utilidades
+```
+
 ## Como correr
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest          # suite completa
-.venv/bin/uvicorn microcrm.api:app --reload
+cd Backend
+pip install -e ".[dev]"
+pytest                              # suite completa
+uvicorn microcrm.api:app --reload
 ```
+
+Para la interfaz, en otra terminal: `cd Frontend && npm run dev`.
 
 ## Arquitectura
 
@@ -17,11 +30,11 @@ Tres capas, con una regla estricta entre ellas:
 
 | Capa | Archivo | Responsabilidad |
 |---|---|---|
-| API | `src/microcrm/api.py` | HTTP. No contiene reglas de negocio. |
-| Servicios | `src/microcrm/services/` | Reglas de negocio. **Nunca escriben SQL.** |
-| Repositorio | `src/microcrm/repository.py` | Todo el SQL del proyecto vive aqui. |
+| API | `Backend/src/microcrm/api.py` | HTTP. No contiene reglas de negocio. |
+| Servicios | `Backend/src/microcrm/services/` | Reglas de negocio. **Nunca escriben SQL.** |
+| Repositorio | `Backend/src/microcrm/repository.py` | Todo el SQL del proyecto vive aqui. |
 
-Si necesitas una consulta nueva, agrega una funcion en `repository.py` y llamala
+Si necesitas una consulta nueva, agrega una funcion en `Backend/src/microcrm/repository.py` y llamala
 desde el servicio. No pongas SQL en `services/` ni en `api.py`.
 
 ## Convenciones
@@ -35,7 +48,7 @@ desde el servicio. No pongas SQL en `services/` ni en `api.py`.
 ## Tests
 
 - `pytest`, sin mocks. Cada test usa una base SQLite en memoria (fixture `db`).
-- Los helpers compartidos viven en `tests/conftest.py`.
+- Los helpers compartidos viven en `Backend/tests/conftest.py`.
 - Nombres de test descriptivos y en espanol: `test_reporte_excluye_otros_meses`.
 - Todo arreglo de bug entra con un test de regresion que falle antes del cambio.
 

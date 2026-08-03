@@ -17,7 +17,7 @@ updates:
       - dependencias
 
   - package-ecosystem: pip
-    directory: "/"
+    directory: "/Backend"
     schedule:
       interval: monthly
     commit-message:

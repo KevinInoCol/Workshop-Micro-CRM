@@ -11,6 +11,10 @@ case "$ruta" in
   *) exit 0 ;;
 esac
 
+# El proyecto Python vive en Backend/: pyproject.toml esta ahi y pytest lo
+# necesita para resolver testpaths y pythonpath.
+cd Backend 2>/dev/null || exit 0
+
 # Si hay un entorno activo (conda o venv) se respeta ese; si no, se busca
 # un .venv/ en el repo. Asi el hook funciona con cualquiera de los dos.
 if [ -n "$CONDA_PREFIX" ] || [ -n "$VIRTUAL_ENV" ]; then

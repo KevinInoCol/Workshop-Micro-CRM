@@ -23,7 +23,9 @@ _db = Database("microcrm.db")
 
 # En desarrollo la interfaz la sirve Vite (`npm run dev` en Frontend/).
 # Si alguien corrio `npm run build`, servimos ese build desde aqui tambien.
-INTERFAZ = Path(__file__).resolve().parents[2] / "Frontend" / "dist"
+#
+# api.py -> microcrm -> src -> Backend -> raiz del repo
+INTERFAZ = Path(__file__).resolve().parents[3] / "Frontend" / "dist"
 
 
 def obtener_db() -> Database:

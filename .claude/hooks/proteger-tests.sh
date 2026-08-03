@@ -2,9 +2,10 @@
 # Guardrail: se pueden AGREGAR tests, no debilitar los que ya existen.
 #
 # Regla:
-#   - Edit sobre tests/  -> solo se permite si el cambio es puramente aditivo
-#                           (el texto viejo sigue intacto dentro del nuevo).
-#   - Write sobre tests/ -> solo se permite si el archivo todavia no existe.
+#   - Edit sobre Backend/tests/  -> solo se permite si el cambio es puramente
+#                                   aditivo (el texto viejo sigue intacto
+#                                   dentro del nuevo).
+#   - Write sobre Backend/tests/ -> solo si el archivo todavia no existe.
 #
 # Recibe el JSON del PreToolUse por stdin y responde con una decision de permiso.
 
@@ -50,7 +51,7 @@ def denegar(motivo):
     }))
     sys.exit(0)
 
-if not relativa.startswith("tests/"):
+if not relativa.startswith("Backend/tests/"):
     permitir()
 
 if herramienta == "Edit":
