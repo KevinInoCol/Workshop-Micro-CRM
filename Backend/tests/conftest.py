@@ -33,6 +33,26 @@ def contacto(db: Database) -> Contacto:
     )
 
 
+def insertar_contacto_crudo(
+    db: Database,
+    nombre: str,
+    email: str,
+    empresa: str | None = None,
+) -> Contacto:
+    """Inserta un contacto saltandose el servicio, tal como quedaron las filas
+    ya existentes en produccion (sin pasar por la normalizacion del email)."""
+    return insertar_contacto(
+        db,
+        Contacto(
+            id=None,
+            nombre=nombre,
+            email=email,
+            empresa=empresa,
+            creado_en=datetime(2026, 1, 1, 8, 0, 0),
+        ),
+    )
+
+
 def crear_deal_cerrado(
     db: Database,
     contacto_id: int,
