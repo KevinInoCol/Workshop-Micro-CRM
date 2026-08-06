@@ -55,7 +55,9 @@ def contacto_por_id(db: Database, contacto_id: int) -> Contacto | None:
 
 
 def contacto_por_email(db: Database, email: str) -> Contacto | None:
-    fila = db.consultar_uno("SELECT * FROM contactos WHERE email = ?", (email,))
+    fila = db.consultar_uno(
+        "SELECT * FROM contactos WHERE email = ? COLLATE NOCASE", (email,)
+    )
     return _a_contacto(fila) if fila else None
 
 
